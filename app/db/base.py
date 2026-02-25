@@ -3,6 +3,7 @@
 
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
+
 naming_convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
