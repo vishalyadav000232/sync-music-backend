@@ -1,0 +1,86 @@
+services:
+
+  # -----------------------------
+  # FastAPI App
+  # -----------------------------
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: sync_music_api
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - backend_network
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  # -----------------------------
+  # PostgreSQL DB
+  # -----------------------------
+  db:
+    image: postgres:18
+    container_name: sync_music_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: vishal@123
+      POSTGRES_DB: sync_music_db
+    volumes:
+      - pgdata:/var/lib/postgresql
+    ports:
+      - "5433:5432"   # host:container -> avoid conflicts
+    networks:
+      - backend_network
+
+  # -----------------------------
+  # Redis (Cache / Realtime)
+  # -----------------------------
+  redis:
+    image: redis:7
+    container_name: sync_music_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - backend_network
+
+  # -----------------------------
+  # Background Worker
+  # -----------------------------
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: sync_music_worker
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      - redis
+      - db
+    networks:
+      - backend_network
+    command: python scripts/start_heartbeat.py
+
+# -----------------------------
+# Named Volumes
+# -----------------------------
+volumes:
+  pgdata:
+  redisdata:
+
+# -----------------------------
+# Custom Network
+# -----------------------------
+networks:
+  backend_network:
+    driver: bridge
