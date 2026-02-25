@@ -1,18 +1,16 @@
-from fastapi import FastAPI , WebSocket
-
-
-
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from app.api.router import router as main_router
+from app.redis.client import redis_client
 
 app = FastAPI()
+
+app.include_router(main_router)
 
 
 @app.get("/")
 async def root():
-    return {
-        "status" : "running"
-    }
+    return {"status": "running"}
 
-from app.redis.client import redis_client
 
 @app.get("/redis-test")
 async def test():
@@ -22,9 +20,13 @@ async def test():
 
 
 @app.websocket("/ws")
-async def websoket_endpoint(websoket : WebSocket):
-    await websoket.accept()
-    
-    while True:
-        data = websoket.receive_text()
-        await websoket.send_text({"data" : data})
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"You sent: {data}")
+
+    except WebSocketDisconnect:
+        print("Client disconnected")

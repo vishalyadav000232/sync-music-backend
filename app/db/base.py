@@ -13,4 +13,7 @@ naming_convention = {
 }
 
 class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=naming_convention)
+    pass
+
+# Set naming convention on the metadata
+Base.metadata.naming_convention = naming_convention

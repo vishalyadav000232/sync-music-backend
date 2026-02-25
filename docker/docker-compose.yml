@@ -1,8 +1,6 @@
-services:
+version: "3.9"
 
-  # -----------------------------
-  # FastAPI App
-  # -----------------------------
+services:
   api:
     build:
       context: ..
@@ -21,27 +19,21 @@ services:
     command: >
       sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
-  # -----------------------------
-  # PostgreSQL DB
-  # -----------------------------
   db:
-    image: postgres:18
+    image: postgres:15
     container_name: sync_music_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: vishal@123
-      POSTGRES_DB: sync_music_db
+      POSTGRES_DB: sync_music
     volumes:
-      - pgdata:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "5433:5432"   # host:container -> avoid conflicts
+      - "5433:5432"
     networks:
       - backend_network
 
-  # -----------------------------
-  # Redis (Cache / Realtime)
-  # -----------------------------
   redis:
     image: redis:7
     container_name: sync_music_redis
@@ -53,9 +45,6 @@ services:
     networks:
       - backend_network
 
-  # -----------------------------
-  # Background Worker
-  # -----------------------------
   worker:
     build:
       context: ..
@@ -71,16 +60,10 @@ services:
       - backend_network
     command: python scripts/start_heartbeat.py
 
-# -----------------------------
-# Named Volumes
-# -----------------------------
 volumes:
   pgdata:
   redisdata:
 
-# -----------------------------
-# Custom Network
-# -----------------------------
 networks:
   backend_network:
     driver: bridge
