@@ -22,3 +22,6 @@ class BaseRepositoryInterface(ABC, Generic[ModelType]):
     @abstractmethod
     async def delete(self, id: UUID):
         pass
+    @abstractmethod
+    async def update(self, id: UUID, obj_in: dict) -> Optional[ModelType]:
+        pass

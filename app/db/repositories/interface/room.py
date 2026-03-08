@@ -22,3 +22,6 @@ class RoomRepositoryInterface(ABC):
     @abstractmethod
     async def room_exists(self, name: str) -> bool:
        pass
+    @abstractmethod
+    async def  get_by_code(self , room_code:str)->Room:
+        pass

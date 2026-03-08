@@ -1,10 +1,20 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from app.api.router import router as main_router
 from app.redis.client import redis_client
-
+from app.websocket.manager import manager
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
+
 app.include_router(main_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],  # Vite default port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -18,15 +28,20 @@ async def test():
     val = await redis_client.get("hello")
     return {"redis_value": val}
 
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+@app.websocket("/ws/{room_id}")
+async def websocket_room(websocket: WebSocket, room_id: str):
+    
+    print("WS CONNECT:", room_id)
+    await manager.connect(room_id, websocket)
 
     try:
         while True:
             data = await websocket.receive_text()
-            await websocket.send_text(f"You sent: {data}")
+            print("MESSAGE:", data)
+
+            await manager.broadcast(room_id, data)
 
     except WebSocketDisconnect:
-        print("Client disconnected")
+        await manager.disconnect(room_id, websocket)
+        print("DISCONNECT:", room_id)
+        

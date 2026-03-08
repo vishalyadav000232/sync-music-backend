@@ -17,4 +17,9 @@ class RoomServiceInterface(ABC):
     @abstractmethod
     async def get_active_rooms(self) -> List[Room]:
         pass
-    
+    @abstractmethod
+    async def join_room(self, room_id: UUID, user_id: UUID):
+        pass
+    @abstractmethod
+    async def leave_room(self, room_id: UUID, user_id: UUID):
+        pass

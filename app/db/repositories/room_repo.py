@@ -26,3 +26,14 @@ class RoomRepository(BaseRepository[Room], RoomRepositoryInterface):
         )
         room = result.scalar_one_or_none()
         return room is not None
+    
+    
+    async def get_by_code(self, room_code: str) -> Room :
+
+        query = select(Room).where(Room.code == room_code)
+
+        result = await self.db.execute(query)
+
+        room = result.scalar_one_or_none()
+
+        return room

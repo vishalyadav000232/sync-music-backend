@@ -20,6 +20,7 @@ class RoomResponse(BaseModel):
     name: str
     host_id: UUID
     is_active: bool
+    code : str
     created_at: datetime
 
     class Config:
