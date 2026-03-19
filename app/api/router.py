@@ -18,3 +18,4 @@ router.include_router(
     prefix="/auth",   # make sure to add leading slash for consistency
     tags=["Auth"]
 )
+

@@ -1,4 +1,7 @@
+        
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from app.db.models.participant import RoomParticipant
@@ -41,12 +44,12 @@ class RoomParticipantRepository(RoomParticipantRepositoryInterface):
     async def commit(self) -> None:
         await self.db.commit()
         
-        
-    async def get_participants_by_room(self , room_id):
+
+    async def get_participants_by_room(self, room_id):
         result = await self.db.execute(
-            select(RoomParticipant).where(
-                RoomParticipant.room_id == room_id
-            )
+        select(RoomParticipant)
+        .options(joinedload(RoomParticipant.user))
+        .where(RoomParticipant.room_id == room_id)
         )
-        
+
         return result.scalars().all()

@@ -28,6 +28,7 @@ class AuthService:
             )
         
         user_dict = {
+            "full_name":user.name,
             "email": user.email,
             "username": user.username,
             "password_hash": hash_password(user.password)

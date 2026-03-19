@@ -1,7 +1,7 @@
 from app.db.repositories.playback_repo import PlaybackRepository
-from app.core.redis import redis_client
+from app.core.redis import get_redis
 from fastapi import Depends
-from redis import Redis
+from redis.asyncio import Redis
 
-def get_playback_repo(redis: Redis = Depends(redis_client)):
-    return PlaybackRepository(redis)  
+async def get_playback_repo(redis: Redis = Depends(get_redis)):
+    return PlaybackRepository(redis)

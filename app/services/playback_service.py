@@ -1,101 +1,119 @@
 import time
-from typing import Dict
 from app.db.repositories.playback_repo import PlaybackRepository
-from fastapi import HTTPException, status
-
 
 class PlaybackService:
-
     def __init__(self, playback_repo: PlaybackRepository):
         self.repo = playback_repo
 
+    def _now(self):
+        return time.time()
 
     async def play(self, room_id: str, user_id: str, host_id: str):
+        print("play in srvice is trigger " )
+        print("room_id" , room_id)
+        print("host_d" , host_id)
+        print(host_id != user_id)
 
-        if user_id != host_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only host can control playback"
-            )
+       
+        if str(user_id) != str(host_id):
+            print("this is the trfiger")
+            return {"error": "Only host can control playback"}
 
-        state = await self.repo.get_playback_state(room_id) or {}
+       
+        state = await self.repo.get_state(room_id) or {}
+
+        now = self._now()
 
         state["is_playing"] = True
-        state["start_time"] = time.time()
         state.setdefault("position", 0)
+        state["last_updated"] = now
+        state["server_time"] = now
 
-        await self.repo.save_playback_state(room_id, state)
+        await self.repo.save_state(room_id, state)
 
-        await self.repo.publish_event(room_id, {
-            "type": "play",
-            "state": state
-        })
+        # ✅ FIX 3: consistent event format
+        event = {
+            "event": {
+                "type": "PLAY",
+                "state": state
+            }
+        }
 
-        return state
+        await self.repo.publish_event(room_id, event)
+
+        return event
 
 
     async def pause(self, room_id: str, user_id: str, host_id: str):
 
-        if user_id != host_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only host can control playback"
-            )
+        if str(user_id) != str(host_id):
+            return {"error": "Only host can control playback"}
 
         state = await self.repo.get_state(room_id)
-
         if not state:
-            raise HTTPException(status_code=404, detail="No playback state")
+            return {"error": "No playback state"}
+
+        now = self._now()
 
         if state.get("is_playing"):
-            elapsed = time.time() - state["start_time"]
+            elapsed = now - state["last_updated"]
             state["position"] += elapsed
 
         state["is_playing"] = False
+        state["last_updated"] = now
+        state["server_time"] = now
 
         await self.repo.save_state(room_id, state)
 
-        await self.repo.publish_event(room_id, {
-            "type": "pause",
-            "state": state
-        })
+        event = {
+            "event": {
+                "type": "PAUSE",
+                "state": state
+            }
+        }
 
-        return state
+        await self.repo.publish_event(room_id, event)
 
-    
+        return event
+
+
     async def seek(self, room_id: str, position: float, user_id: str, host_id: str):
 
-        if user_id != host_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only host can control playback"
-            )
+        if str(user_id) != str(host_id):
+            return {"error": "Only host can control playback"}
 
-        state = await self.repo.get_playback_state(room_id) or {}
+        state = await self.repo.get_state(room_id) or {}
+
+        now = self._now()
 
         state["position"] = position
-        state["start_time"] = time.time()
-        state["is_playing"] = True
+        state["last_updated"] = now
+        state["server_time"] = now
+        state["is_playing"] = state.get("is_playing", True)
 
-        await self.repo.save_playback_state(room_id, state)
+        await self.repo.save_state(room_id, state)
 
-        await self.repo.publish_event(room_id, {
-            "type": "seek",
-            "state": state
-        })
+        event = {
+            "event": {
+                "type": "SEEK",
+                "state": state
+            }
+        }
 
-        return state
+        await self.repo.publish_event(room_id, event)
 
-    
+        return event
+
+
     async def get_current_position(self, room_id: str):
-
-        state = await self.repo.get_playback_state(room_id)
-
+        state = await self.repo.get_state(room_id)
         if not state:
             return 0
 
+        now = self._now()
+
         if state.get("is_playing"):
-            elapsed = time.time() - state["start_time"]
+            elapsed = now - state["last_updated"]
             return state["position"] + elapsed
 
         return state["position"]

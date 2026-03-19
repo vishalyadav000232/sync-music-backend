@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from uuid import UUID
-
+from app.api.users.scemas import UserResponse
 
 class CreateRoom(BaseModel):
     name: str = Field(
@@ -25,3 +25,21 @@ class RoomResponse(BaseModel):
 
     class Config:
         from_attributes = True 
+        
+        
+        
+class ParticipantResponse(BaseModel):
+    id : UUID
+    room_id : UUID
+    user_id : UUID
+    joined_at : datetime
+    is_connected : bool
+    user : UserResponse
+    
+class RoomDetailResponse(BaseModel):
+    user_id : UUID
+    room: RoomResponse
+    participants: list[ParticipantResponse]
+
+    class Config:
+            from_attributes = True

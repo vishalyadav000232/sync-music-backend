@@ -10,7 +10,7 @@ import uuid
 import redis
 from app.db.dependencies.refresh_deps import get_refresh_service
 from app.services.refresh_token_service import RefreshTokenService
-
+from fastapi import HTTPException , status
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -140,8 +140,13 @@ class JWTTokenService(TokenServiceInterface):
 
             return payload
 
+        
+
         except JWTError:
-            raise ValueError("Invalid or expired token")
+            raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token expired"
+    )
        
         
     async def revoke_refresh_token(self, token: str)-> tuple[str, str]:

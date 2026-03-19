@@ -16,15 +16,15 @@ class ApiResponse(BaseModel, Generic[T]):
 
 class RegisterRequest(BaseModel):
 
-    # name: Annotated[
-    #     str,
-    #     Field(
-    #         min_length=3,
-    #         max_length=50,
-    #         description="Enter your name",
-    #         examples=["Vishal Yadav"],
-    #     ),
-    # ]
+    name: Annotated[
+        str,
+        Field(
+            min_length=3,
+            max_length=50,
+            description="Enter your name",
+            examples=["Vishal Yadav"],
+        ),
+    ]
 
     username: Annotated[
         str,

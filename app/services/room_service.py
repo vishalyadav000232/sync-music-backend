@@ -22,6 +22,7 @@ class RoomService(RoomServiceInterface):
                 detail="Room already exists"
             )
         
+        
         room_data = {
             "name" : data["name"],
             "host_id": data["host_id"],
@@ -63,12 +64,15 @@ class RoomService(RoomServiceInterface):
 
         await self.repo.commit()
 
+        participants = await self.repo.get_participants_by_room(room_id=room.id)
     
         return {
-        "room_id": room.id,
-        "room": room,
-        "participant_id": participant.id
-    }
+        "user_id": user_id,
+        "room":room,
+        "participants": participants,
+        
+  }
+
         
     async def leave_room(self, room_id: UUID, user_id: UUID):
         participant = await self.repo.get_by_room_and_user(room_id, user_id)

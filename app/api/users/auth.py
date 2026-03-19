@@ -32,16 +32,18 @@ async def login(
     
     data = await auth_service.login(payload)
     response.set_cookie(
-            key="refresh_token",
-            value=data["refresh_token"],
-            httponly=True,
-            secure=False,  # True in production
-            samesite="lax",
-            max_age=60*60*24*7,
-            path="/"
-        )
+        key="refresh_token",
+        value=data["refresh_token"],
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=60*60*24*7
+    )
 
-    return data
+    return {
+        "access_token" : data["access_token"],
+        "type":"bearer"
+    }
 
 @router.post(
     "/signup",
@@ -72,6 +74,7 @@ async def refresh_token(
 ):
    
     refresh_token_cookie = request.cookies.get("refresh_token")
+    print("cookies rfresh token " , refresh_token_cookie)
 
     if not refresh_token_cookie:
         raise HTTPException(
@@ -90,7 +93,7 @@ async def refresh_token(
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=False,  # True in production
+            secure=False,  
             samesite="lax",
             max_age=60*60*24*7,
             path="/"
