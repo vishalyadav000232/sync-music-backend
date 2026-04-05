@@ -12,15 +12,36 @@ def get_room_service(
     
     return RoomService(repository , repo)
 
-from app.services.playback_service import PlaybackService
+# from app.services.playback_service import PlaybackService
 from app.db.repositories.playback_repo import PlaybackRepository
 from app.db.dependencies.playback_deps import get_playback_repo
 
-
-def get_playback_service(
-    playback_repo :PlaybackRepository = Depends(get_playback_repo)
-):
-    return PlaybackService(playback_repo
+# def get_playback_service(
+#     playback_repo :PlaybackRepository = Depends(get_playback_repo)
+# ):
+#     return PlaybackService(playback_repo
         
+    # )
+from fastapi import Depends
+from app.services.playback__service import PlaybackService
+# from app.services.playback__service import PlaybackSer÷vice
+
+from app.redis.client import get_redis
+from app.redis.playback_state import PlaybackState
+from app.redis.distributed_lock import RedisLock
+from app.redis.pubsub import PubSub
+
+
+async def get_playback__service():
+
+    redis_client = await get_redis()
+
+    state_repo = PlaybackState(redis_client)
+    pub_sub = PubSub(redis_client)
+    lock = RedisLock(redis_client)
+
+    return PlaybackService(
+        state_repo=state_repo,
+        pub_sub=pub_sub,
+        lock=lock
     )
-    

@@ -4,14 +4,20 @@ from redis.asyncio import Redis
 
 
 class PlaybackRepository:
+    
     def __init__(self, redis: Redis):
         self.redis = redis
 
+
     def _key(self, room_id: str) -> str:
         return f"room:{room_id}:playback"
+    
+    
 
     def _channel(self, room_id: str) -> str:
         return f"room:{room_id}:events"
+    
+    
 
 
     async def save_state(self, room_id: str, state: Dict):
@@ -27,9 +33,12 @@ class PlaybackRepository:
         if not data:
             return None
         return json.loads(data)
+    
+    
 
     async def delete_state(self, room_id: str):
         await self.redis.delete(self._key(room_id))
+
 
  
     async def publish_event(self, room_id: str, event: Dict):
@@ -40,6 +49,7 @@ class PlaybackRepository:
             "event": event
         }, default=str)
         )
+
 
     
     async def subscribe(self, room_id: str):

@@ -3,7 +3,7 @@ import json
 import logging
 
 from app.websocket.roomstate import RoomState
-
+from app.redis.pubsub import PubSub
 logger = logging.getLogger(__name__)
 
 
@@ -14,7 +14,7 @@ class RoomListenerRegistry:
         
         print(self._rooms)
 
-    async def ensure_listener(self, room_id: str, playback_repo, manager):
+    async def ensure_listener(self, room_id: str, playback_repo :PubSub , manager):
 
         async with self._lock:
             if room_id in self._rooms:

@@ -1,7 +1,7 @@
 from app.db.repositories.interface.user import UserRepositoryInterface
 from fastapi import Depends
 from app.db.dependencies.user_deps import get_user_repository
-from app.core.security import JWTTokenService , TokenServiceInterface
+from app.core.security import   TokenServiceInterface
 from app.db.dependencies.token_deps import get_token_service
 from app.services.auth.auth_service import AuthService
 

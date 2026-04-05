@@ -31,7 +31,6 @@ class PlaybackService:
 
         await self.repo.save_state(room_id, state)
 
-        # ✅ FIX 3: consistent event format
         event = {
             "event": {
                 "type": "PLAY",

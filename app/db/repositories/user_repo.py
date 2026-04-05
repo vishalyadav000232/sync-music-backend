@@ -2,7 +2,7 @@ from app.db.repositories.base import BaseRepository
 from app.db.models.users import User
 from sqlalchemy import select
 from app.db.repositories.interface.user import UserRepositoryInterface
-
+from typing import Sequence
 
 
 class UserRepository(BaseRepository[User], UserRepositoryInterface):
@@ -14,3 +14,9 @@ class UserRepository(BaseRepository[User], UserRepositoryInterface):
     async def get_by_username(self, username: str):
         result = await self.db.execute(select(User).where(User.username == username))
         return result.scalar_one_or_none()
+    
+    async def  totoal_active_user(self )-> Sequence[User]:
+        result = await self.db.execute(
+            select(User).where(User.is_active == True)
+            )
+        return result.all()
