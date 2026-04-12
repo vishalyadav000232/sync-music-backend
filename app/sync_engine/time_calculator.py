@@ -1,15 +1,19 @@
 import time
 
 
-class TimeCalculater:
+class TimeCalculator: 
     
     @staticmethod
-    async def current_position(state):
-        if not state :
+    def current_position(state):
+        if not state:
             return 0
-        if state.get("is_playing"):
-            elaps_time = time.monotonic() - state.get("last_update")
-            return state["position"] + elaps_time
 
-        return state["position"]
-    
+        position = state.get("position", 0)
+        last_updated = state.get("last_updated")
+
+        if state.get("is_playing") and last_updated:
+            now = time.time()
+            elapsed = now - last_updated
+            return position + elapsed
+
+        return position

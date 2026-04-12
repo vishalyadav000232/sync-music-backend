@@ -89,12 +89,12 @@ class RoomListenerRegistry:
             if state.ref_count > 0:
                 return
 
-            # 🔥 LAST USER LEFT
+           
 
             state.task.cancel()
 
             try:
-                # ✅ FIX 4: safe cancel with timeout
+                
                 await asyncio.wait_for(state.task, timeout=3)
 
             except asyncio.TimeoutError:
@@ -121,5 +121,4 @@ class RoomListenerRegistry:
             logger.info("Shut down listener for room %s", room_id)
 
 
-# ✅ Singleton
 registry = RoomListenerRegistry()

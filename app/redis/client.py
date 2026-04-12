@@ -6,5 +6,5 @@ redis_client = Redis(
     decode_responses=True
 )
 
-async def get_redis():
+def get_redis():
     return redis_client

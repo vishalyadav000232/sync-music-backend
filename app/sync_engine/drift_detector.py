@@ -1,13 +1,27 @@
 class DriftDetector:
 
-    DRIFT_THRESHOLD = 0.5
+    HARD_THRESHOLD = 0.5   # big jump
+    SOFT_THRESHOLD = 0.15  # smooth correction
 
     @staticmethod
     def detect(server_position, client_position):
 
-        drift = abs(server_position - client_position)
+        drift = server_position - client_position
+        abs_drift = abs(drift)
 
-        if drift > DriftDetector.DRIFT_THRESHOLD:
-            return True, drift
+        if abs_drift > DriftDetector.HARD_THRESHOLD:
+            return {
+                "action": "HARD_SYNC",  # jump
+                "drift": drift
+            }
 
-        return False, drift
+        elif abs_drift > DriftDetector.SOFT_THRESHOLD:
+            return {
+                "action": "SOFT_SYNC",  # speed adjust
+                "drift": drift
+            }
+
+        return {
+            "action": "NONE",
+            "drift": drift
+        }

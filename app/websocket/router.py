@@ -11,6 +11,9 @@ from app.services.playback__service import PlaybackService
 
 from app.core.security import TokenServiceInterface
 from app.db.dependencies.token_deps import get_token_service
+import time
+import asyncio
+from app.sync_engine.heartbeat_scheduler import HeartbeatScheduler , get_heartbeat
 
 router = APIRouter()
 
@@ -22,10 +25,13 @@ async def join_room_ws(
     user_id: str,
     room_repo: RoomRepositoryInterface = Depends(get_room_repository),
     playback_service: PlaybackService = Depends(get_playback__service),
-    token_service: TokenServiceInterface = Depends(get_token_service)
+    token_service: TokenServiceInterface = Depends(get_token_service),
+    heat_beat : HeartbeatScheduler = Depends(get_heartbeat)
 ):
 
-    #
+    # Auth 
+    
+     
     token = websocket.query_params.get("token")
 
     if not token:
@@ -37,6 +43,9 @@ async def join_room_ws(
     if not token_user_id or token_user_id != user_id:
         await websocket.close(code=1008)
         return
+    
+    
+    #  ------------------ Room Check --------------
 
 
     room = await room_repo.get_by_code(room_code)
@@ -47,11 +56,18 @@ async def join_room_ws(
 
     room_id = room.id
     host_id = room.host_id
+    
+    
+    # ------------------ Connect -----------------------
 
    
     await manager.connect(room_id, websocket)
+    await heat_beat.start(room_id)
 
     await registry.ensure_listener(room_id , playback_service.pub_sub , manager)
+    
+    #  -----------------INITIAL STATE ------------------
+
 
     state = await playback_service.state_repo.get(room_id)
 
@@ -59,15 +75,33 @@ async def join_room_ws(
         await websocket.send_json({
             "type": "INITIAL_STATE",
             "state": state,
+            "server_time" : time.time(),
             "source": "server"
         })
 
     try:
         while True:
-            message = await websocket.receive_json()
+            try:
+                message = await asyncio.wait_for(websocket.receive_json() , timeout=30)
+                
+            except asyncio.TimeoutError:
+                await websocket.send_json({"type": "PING"})
+                continue
+            
             action = message.get("type")
-
+            print(action)
+            
+            if action in ["PLAY", "PAUSH" , "SEEK"] and str(user_id) != str(host_id):
+                await websocket.send_json({
+                    "type":"ERROR",
+                    "message":"Only host can control the playback 🥲"
+                })
+                continue
+            
+            print("this is the action : --> " , action)
             print("Incoming:", message)
+            
+            
 
             
             if action == "PLAY":
@@ -110,4 +144,6 @@ async def join_room_ws(
 
     except WebSocketDisconnect:
         await manager.disconnect(room_id, websocket)
+        if manager.get_room_size(room_id) == 0:
+            await heat_beat.stop(room_id)
         await registry.release(room_id)
