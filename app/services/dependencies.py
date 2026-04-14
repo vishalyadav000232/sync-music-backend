@@ -34,7 +34,7 @@ from app.redis.pubsub import PubSub
 
 async def get_playback__service():
 
-    redis_client = await get_redis()
+    redis_client = get_redis()
 
     state_repo = PlaybackState(redis_client)
     pub_sub = PubSub(redis_client)

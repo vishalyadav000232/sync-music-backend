@@ -74,7 +74,6 @@ async def refresh_token(
 ):
    
     refresh_token_cookie = request.cookies.get("refresh_token")
-    print("cookies rfresh token " , refresh_token_cookie)
 
     if not refresh_token_cookie:
         raise HTTPException(
