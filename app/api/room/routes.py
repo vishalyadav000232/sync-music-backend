@@ -45,6 +45,4 @@ async def leave_room(
     service: RoomServiceInterface = Depends(get_room_service),
     current_user: User = Depends(get_current_user),
 ):
-
-
-    return await service.leave_room(room_id , current_user.id)
+    return await service.leave_room(room_id, current_user.id)

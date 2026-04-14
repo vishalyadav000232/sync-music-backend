@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from uuid import UUID
+from datetime import datetime
 from app.api.users.scemas import UserResponse
+
 
 class CreateRoom(BaseModel):
     name: str = Field(
@@ -11,8 +13,6 @@ class CreateRoom(BaseModel):
     )
 
     host_id: UUID
-    
-from datetime import datetime
 
 
 class RoomResponse(BaseModel):
@@ -20,7 +20,7 @@ class RoomResponse(BaseModel):
     name: str
     host_id: UUID
     is_active: bool
-    code : str
+    code: str
     created_at: datetime
 
     class Config:
