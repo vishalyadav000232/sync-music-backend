@@ -98,7 +98,7 @@ async def join_room_ws(
             action = message.get("type")
             logger.debug("Action %s from user %s in room %s", action, user_id, room_id)
 
-            if action in ("PLAY", "PAUSE", "SEEK") and user_id != host_id:
+            if action in ("PLAY", "PAUSE", "SEEK", "NEXT", "PREV") and user_id != host_id:
                 await websocket.send_json({
                     "type": "ERROR",
                     "message": "Only host can control playback",
@@ -119,6 +119,12 @@ async def join_room_ws(
                 elif action == "SEEK":
                     position = max(0.0, float(message.get("position", 0)))
                     await playback_service.seek(room_id, position, user_id, host_id)
+
+                elif action == "NEXT":
+                    await playback_service.next(room_id, user_id, host_id)
+
+                elif action == "PREV":
+                    await playback_service.prev(room_id, user_id, host_id)
 
                 elif action == "chat_message":
                     await playback_service.pub_sub.publish(room_id, {

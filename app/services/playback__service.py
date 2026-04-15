@@ -5,6 +5,7 @@ from app.redis.distributed_lock import RedisLock
 from app.redis.pubsub import PubSub
 from app.redis.playback_state import PlaybackState
 from app.sync_engine.time_calculator import TimeCalculator
+from app.utils.song import playlist
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +153,80 @@ class PlaybackService:
 
         except Exception:
             logger.exception("Error during seek for room %s", room_id)
+        finally:
+            await self.lock.release(lock_key)
+
+    async def next(self, room_id: str, user_id: str, host_id: str):
+        if str(user_id) != str(host_id):
+            return
+
+        lock_key = f"lock:next:{room_id}"
+        if not await self.lock.acquire(lock_key):
+            logger.warning("Could not acquire next lock for room %s", room_id)
+            return
+
+        try:
+            now = time.time()
+            state = await self.state_repo.get(room_id) or {}
+            current_index = int(state.get("index", -1))
+            next_index = (current_index + 1) % len(playlist)
+
+            state = {
+                "is_playing": True,
+                "song": playlist[next_index],
+                "index": next_index,
+                "position": 0.0,
+                "last_updated": now,
+            }
+
+            await self.state_repo.set(room_id, state)
+            await self.pub_sub.publish(room_id, {
+                "event": {
+                    "type": "NEXT",
+                    "state": state,
+                    "server_time": now,
+                    "source": user_id,
+                }
+            })
+        except Exception:
+            logger.exception("Error during next for room %s", room_id)
+        finally:
+            await self.lock.release(lock_key)
+
+    async def prev(self, room_id: str, user_id: str, host_id: str):
+        if str(user_id) != str(host_id):
+            return
+
+        lock_key = f"lock:prev:{room_id}"
+        if not await self.lock.acquire(lock_key):
+            logger.warning("Could not acquire prev lock for room %s", room_id)
+            return
+
+        try:
+            now = time.time()
+            state = await self.state_repo.get(room_id) or {}
+            current_index = int(state.get("index", 0))
+            prev_index = (current_index - 1) % len(playlist)
+
+            state = {
+                "is_playing": True,
+                "song": playlist[prev_index],
+                "index": prev_index,
+                "position": 0.0,
+                "last_updated": now,
+            }
+
+            await self.state_repo.set(room_id, state)
+            await self.pub_sub.publish(room_id, {
+                "event": {
+                    "type": "PREV",
+                    "state": state,
+                    "server_time": now,
+                    "source": user_id,
+                }
+            })
+        except Exception:
+            logger.exception("Error during prev for room %s", room_id)
         finally:
             await self.lock.release(lock_key)
 
